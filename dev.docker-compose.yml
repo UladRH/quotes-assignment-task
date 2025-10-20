@@ -1,0 +1,15 @@
+services:
+  db:
+    image: pgvector/pgvector:pg18-trixie
+    networks:
+      - default
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+volumes:
+  db_data:
+    driver: local

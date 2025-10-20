@@ -1,0 +1,24 @@
+type Quote {
+  quoteId: ID!
+  quote: String!
+  author: String!
+  similarQuotes(limit: Int = 5): [Quote!]!
+}
+
+type QuoteLikeSummary {
+  quoteId: ID!
+  likesCount: Int!
+  impressionsCount: Int!
+  isLiked: Boolean!
+  changed: Boolean!
+}
+
+type Query {
+  rolledQuote: Quote!
+  quote(quoteId: ID!): Quote!
+}
+
+type Mutation {
+  likeQuote(quoteId: ID!): QuoteLikeSummary!
+  unlikeQuote(quoteId: ID!): QuoteLikeSummary!
+}
