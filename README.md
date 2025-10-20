@@ -2,8 +2,8 @@
 
 This repository contains a production‑style implementation of the assignment to build a quotes web service. It exposes both REST and GraphQL APIs, runs on Fastify (via NestJS Fastify adapter), fetches random quotes from a remote source, lets users like quotes, prioritizes high‑rated quotes for new users, and finds similar quotes using vector embeddings.
 
-- Main service code lives in `quotes-be/`
-- Local Postgres (with pgvector) is provided via `dev.docker-compose.yml`
+- Main service code lives in [`quotes-be/`](quotes-be/)
+- Local Postgres (with pgvector) is provided via [`dev.docker-compose.yml`](dev.docker-compose.yml)
 
 ## What’s implemented (mapped to the assignment)
 
@@ -11,37 +11,37 @@ Assignment highlights and where they are in the codebase:
 
 - Fastify-based backend with both REST and GraphQL
 
-  - Framework: NestJS on Fastify adapter — `quotes-be/src/main.ts` (`NestFastifyApplication`)
-  - REST API: `quotes-be/src/quotes-rest-api/quotes-rest-api.controller.ts`
-  - GraphQL API: schema-first `quotes-be/src/quotes-graphql-api/quotes.graphql`, resolvers `quotes-be/src/quotes-graphql-api/`
+  - Framework: NestJS on Fastify adapter — [`main.ts`](quotes-be/src/main.ts) (`NestFastifyApplication`)
+  - REST API: [`quotes-rest-api/quotes-rest-api.controller.ts`](quotes-be/src/quotes-rest-api/quotes-rest-api.controller.ts)
+  - GraphQL API: schema-first [`quotes-graphql-api/quotes.graphql`](quotes-be/src/quotes-graphql-api/quotes.graphql), resolvers [`quotes-graphql-api/`](quotes-be/src/quotes-graphql-api/)
 
 - Random quote from a remote source (every call returns another random one)
 
-  - Remote client: DummyJSON quotes — `quotes-be/src/external-api-clients/dummyjson-quotes/`
-  - Rolling logic (random vs high ranked): `quotes-be/src/quotes/quotes.service.ts`
-  - Tunable params (new user boost, reroll attempts): `quotes-be/src/app-params.ts`
+  - Remote client: DummyJSON quotes — [`external-api-clients/dummyjson-quotes/`](quotes-be/src/external-api-clients/dummyjson-quotes/)
+  - Rolling logic (random vs high ranked): [`quotes/quotes.service.ts`](quotes-be/src/quotes/quotes.service.ts)
+  - Tunable params (new user boost, reroll attempts): [`app-params.ts`](quotes-be/src/app-params.ts)
 
 - Like quotes via API and track stats
 
   - REST endpoints: `POST /quotes/:quoteId/likes`, `DELETE /quotes/:quoteId/likes`
   - GraphQL mutations: `likeQuote`, `unlikeQuote`
-  - Stats storage (likes, impressions): `quotes-be/src/quotes/stats/` with Kysely repos and services
+  - Stats storage (likes, impressions): [`quotes/stats/`](quotes-be/src/quotes/stats/) with Kysely repos and services
 
 - Prioritize high‑rated quotes for new users
 
-  - Session bootstrap and user detection: `quotes-be/src/session/` (secure session guard + interceptor)
-  - High‑rated selection (Bayesian smoothing and randomization): `quotes-be/src/quotes/high-rated/`
-  - Random roll logic with new‑user boost: `quotes-be/src/quotes/quotes.service.ts` using `app-params.ts`
+  - Basic automatic session, that created implicitly for any new visitor: [`session/`](quotes-be/src/session/) (secure session guard + interceptor)
+  - High‑rated selection (Bayesian smoothing and randomization): [`high-rated/`](quotes-be/src/quotes/high-rated/)
+  - Random roll logic with a logic that boost highly rated quotes for new uses: [`quotes/quotes.service.ts`](quotes-be/src/quotes/quotes.service.ts) using [`app-params.ts`](quotes-be/src/app-params.ts)
 
 - Find similar quotes to the current one (vector search)
-  - pgvector schema + index: migrations in `quotes-be/migrations/` (enable extension + embeddings table)
-  - Vector search: `quotes-be/src/quotes/similar/` (Kysely + `<->` distance)
-  - Prebuilt embeddings JSON: `quotes-be/pregenerated-data/embeddinggemma_by_quote_id.json`
+  - pgvector schema + index: migrations in [`migrations/`](quotes-be/migrations/) (enable extension + embeddings table)
+  - Vector search: [`quotes/similar/`](quotes-be/src/quotes/similar/) (Kysely + `<->` distance)
+  - Prebuilt embeddings JSON: [`pregenerated-data/embeddinggemma_by_quote_id.json`](quotes-be/pregenerated-data/embeddinggemma_by_quote_id.json)
 
 Testing and documentation:
 
-- Unit tests: services/repos have Jest tests under `quotes-be/src/**.spec.ts`
-- E2E tests: `quotes-be/test/*.e2e-spec.ts` (REST and GraphQL)
+- Unit tests: services/repos have Jest tests under [`quotes-be/src/`](quotes-be/src/) (`*.spec.ts`)
+- E2E tests: [`test/`](quotes-be/test/) (`*.e2e-spec.ts`, REST and GraphQL)
 - OpenAPI (Swagger UI): served at `/api`
 - GraphQL Playground: served at `/graphiql`
 
@@ -62,27 +62,14 @@ Testing and documentation:
 Prerequisites:
 
 - macOS/Linux with Docker
-- Node.js 20+
+- Node.js 22+
 
 ### 1) Create a .env (root)
 
-The same `.env` is used by Docker Compose and the app (loaded from `quotes-be/src/app.module.ts`). Example values are fine for local testing:
+The same [`.env`](.env) is used by Docker Compose and the app (loaded from [`app.module.ts`](quotes-be/src/app.module.ts)). Example values are fine for local testing:
 
 ```bash
-# Postgres
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=quotes
-
-# Session (any random values for local)
-SESSION_SECRET=devsecretdevsecretdevsecretdevse
-SESSION_SALT=devsaltdevsalt
-
-# Optional: embeddings generation
-# OLLAMA_EMBED_URL=http://localhost:11434/api/embed
-# OLLAMA_MODEL=embeddinggemma:300m
+mv .env.example .env
 ```
 
 ### 2) Start PostgreSQL (with pgvector)
@@ -121,6 +108,8 @@ If you prefer to specify the source file explicitly:
 EMBEDDINGS_SOURCE=pregenerated-data/embeddinggemma_by_quote_id.json npm run kysely seed run
 ```
 
+Default embeddings source: [`pregenerated-data/embeddinggemma_by_quote_id.json`](quotes-be/pregenerated-data/embeddinggemma_by_quote_id.json).
+
 ### 5) Start the API
 
 ```bash
@@ -146,13 +135,17 @@ REST examples:
 GraphQL examples (via Playground at `/graphiql`):
 
 ```graphql
+fragment QuoteFrag on Quote {
+  quoteId
+  quote
+  author
+}
+
 query {
   rolledQuote {
-    quoteId
-    quote
-    author
+    ...QuoteFrag
     similarQuotes {
-      quoteId
+      ...QuoteFrag
     }
   }
 }
@@ -196,7 +189,7 @@ EMBEDDINGS_SOURCE=pregenerated-data/embeddinggemma_by_quote_id.json npm run kyse
 
 ## Tests
 
-From `quotes-be/`:
+From [`quotes-be/`](quotes-be/):
 
 ```bash
 # Unit tests
@@ -213,15 +206,15 @@ npm run test:cov
 
 - Creativity: Combines REST and GraphQL, adds likeable quotes, onboarding‑aware randomization, and semantic similarity via pgvector. Playground + Swagger for easy exploration.
 - Quality: Automated migrations/seeds, strong validation with Zod, session guard/interceptor, clear config, and automated tests (unit + e2e).
-- Structure: Modular NestJS architecture: REST and GraphQL modules, clean domain services (`quotes/`), infrastructure (DB via Kysely), and cross‑cutting session module.
+- Structure: Modular NestJS architecture: REST and GraphQL modules, clean domain services ([`quotes/`](quotes-be/src/quotes/)), infrastructure (DB via Kysely), and cross‑cutting session module ([`session/`](quotes-be/src/session/)).
 
 If you’re reviewing this assignment, please start in these files:
 
-- Random roll and feature orchestration: `quotes-be/src/quotes/quotes.service.ts`
-- High‑rated selection: `quotes-be/src/quotes/high-rated/`
-- Similar quotes (vector search): `quotes-be/src/quotes/similar/`
-- Stats (likes/impressions): `quotes-be/src/quotes/stats/`
-- REST and GraphQL layers: `quotes-be/src/quotes-rest-api/` and `quotes-be/src/quotes-graphql-api/`
-- Remote quotes client: `quotes-be/src/external-api-clients/dummyjson-quotes/`
+- Random roll and feature orchestration: [`quotes/quotes.service.ts`](quotes-be/src/quotes/quotes.service.ts)
+- High‑rated selection: [`quotes/high-rated/`](quotes-be/src/quotes/high-rated/)
+- Similar quotes (vector search): [`quotes/similar/`](quotes-be/src/quotes/similar/)
+- Stats (likes/impressions): [`quotes/stats/`](quotes-be/src/quotes/stats/)
+- REST and GraphQL layers: [`quotes-rest-api/`](quotes-be/src/quotes-rest-api/) and [`quotes-graphql-api/`](quotes-be/src/quotes-graphql-api/)
+- Remote quotes client: [`external-api-clients/dummyjson-quotes/`](quotes-be/src/external-api-clients/dummyjson-quotes/)
 
 That tour should make it clear the assignment is fully implemented and production‑ready for local evaluation.
